@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="uz" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JudgeHub - Loyihalarni Baholash Tizimi</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              dark: '#0b1329',
+              slate: '#1e293b',
+              emerald: '#10b981',
+              blue: '#3b82f6'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="h-full antialiased overflow-x-hidden flex flex-col justify-between">
+
+  <!-- ========================================== -->
+  <!-- LOADING SCREEN -->
+  <!-- ========================================== -->
+  <div id="loading-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-[#0b1329]">
+    <div class="flex flex-col items-center">
+      <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500 mb-4"></div>
+      <p class="text-slate-400 font-medium">Tizim yuklanmoqda...</p>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- LOGIN VIEW -->
+  <!-- ========================================== -->
+  <div id="login-view" class="hidden min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md animate-fade-in">
+      
+      <!-- Brand Logo -->
+      <div class="flex flex-col items-center mb-8">
+        <div class="bg-gradient-to-tr from-emerald-500 to-blue-600 p-3.5 rounded-2xl shadow-lg shadow-emerald-500/10 mb-4">
+          <i data-lucide="award" class="w-8 h-8 text-white"></i>
+        </div>
+        <h1 class="text-3xl font-extrabold tracking-tight text-white">JudgeHub</h1>
+        <p class="text-slate-400 text-sm mt-1">Loyihalarni professional baholash tizimi</p>
+      </div>
+
+      <!-- Login Card -->
+      <div class="glass-panel p-8 rounded-2xl shadow-xl">
+        <h2 class="text-xl font-semibold text-white mb-2">Xush kelibsiz</h2>
+        <p class="text-slate-400 text-sm mb-6">Tizimga kirish uchun login va parolingizni kiriting</p>
+
+        <form id="login-form" class="space-y-5">
+          <!-- Error alert -->
+          <div id="login-error" class="hidden bg-red-950/40 border border-red-500/30 text-red-200 px-4 py-3 rounded-lg text-sm flex items-start gap-2.5">
+            <i data-lucide="alert-circle" class="w-5 h-5 text-red-400 shrink-0 mt-0.5"></i>
+            <span id="login-error-text">Login yoki parol xato</span>
+          </div>
+
+          <div>
+            <label for="username" class="block text-sm font-medium text-slate-300 mb-1.5">Foydalanuvchi nomi</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <i data-lucide="user" class="w-4 h-4"></i>
+              </span>
+              <input type="text" id="username" name="username" required 
+                class="glass-input w-full pl-10 pr-4 py-2.5 rounded-xl text-sm placeholder-slate-500" 
+                placeholder="Masalan, admin yoki judge1">
+            </div>
+          </div>
+
+          <div>
+            <label for="password" class="block text-sm font-medium text-slate-300 mb-1.5">Parol</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <i data-lucide="lock" class="w-4 h-4"></i>
+              </span>
+              <input type="password" id="password" name="password" required 
+                class="glass-input w-full pl-10 pr-4 py-2.5 rounded-xl text-sm placeholder-slate-500" 
+                placeholder="••••••••">
+            </div>
+          </div>
+
+          <button type="submit" 
+            class="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white font-medium py-2.5 px-4 rounded-xl text-sm shadow-lg shadow-emerald-500/25 transition-all duration-200 hover:-translate-y-0.5 flex items-center justify-center gap-2">
+            <span>Tizimga kirish</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+        </form>
+
+        <div class="mt-6 border-t border-slate-800 pt-5 text-center">
+          <p class="text-xs text-slate-500 font-semibold mb-2">DEMO TIZIMGA KIRISH:</p>
+          <div class="grid grid-cols-2 gap-2 text-[11px] text-slate-400">
+            <div class="bg-slate-900/40 p-2 rounded-lg border border-slate-800">
+              <span class="font-bold text-emerald-400 block">Admin</span>
+              admin / admin123
+            </div>
+            <div class="bg-slate-900/40 p-2 rounded-lg border border-slate-800">
+              <span class="font-bold text-blue-400 block">Hakam</span>
+              judge1 / judge123
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MAIN APP LAYOUT -->
+  <!-- ========================================== -->
+  <div id="main-layout" class="hidden min-h-screen flex flex-col lg:flex-row bg-[#0b1329]">
+    
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar" class="w-full lg:w-64 bg-[#080d1c] border-b lg:border-b-0 lg:border-r border-slate-800 flex flex-col shrink-0 no-print">
+      <!-- Sidebar Header -->
+      <div class="h-16 flex items-center justify-between px-6 border-b border-slate-800">
+        <a href="#dashboard" class="flex items-center gap-2.5">
+          <div class="bg-gradient-to-tr from-emerald-500 to-blue-600 p-1.5 rounded-lg">
+            <i data-lucide="award" class="w-5 h-5 text-white"></i>
+          </div>
+          <span class="text-lg font-bold text-white tracking-wide">JudgeHub</span>
+        </a>
+        <button id="mobile-sidebar-close" class="lg:hidden text-slate-400 hover:text-white">
+          <i data-lucide="x" class="w-6 h-6"></i>
+        </button>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav class="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
+        <!-- Admin Links -->
+        <div id="admin-nav" class="hidden space-y-1.5">
+          <a href="#admin-dashboard" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800/40 hover:text-white transition-all">
+            <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+            <span>Boshqaruv paneli</span>
+          </a>
+          <a href="#admin-classes" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800/40 hover:text-white transition-all">
+            <i data-lucide="graduation-cap" class="w-4 h-4"></i>
+            <span>Sinflar</span>
+          </a>
+          <a href="#admin-groups" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800/40 hover:text-white transition-all">
+            <i data-lucide="users" class="w-4 h-4"></i>
+            <span>Guruhlar / Loyihalar</span>
+          </a>
+          <a href="#admin-judges" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800/40 hover:text-white transition-all">
+            <i data-lucide="shield-check" class="w-4 h-4"></i>
+            <span>Hakamlar</span>
+          </a>
+          <a href="#admin-evaluations" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800/40 hover:text-white transition-all">
+            <i data-lucide="check-square" class="w-4 h-4"></i>
+            <span>Baholar</span>
+          </a>
+          <a href="#admin-rankings" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800/40 hover:text-white transition-all">
+            <i data-lucide="trending-up" class="w-4 h-4"></i>
+            <span>Reyting</span>
+          </a>
+          <a href="#admin-statistics" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800/40 hover:text-white transition-all">
+            <i data-lucide="bar-chart-2" class="w-4 h-4"></i>
+            <span>Statistika</span>
+          </a>
+        </div>
+
+        <!-- Judge Links -->
+        <div id="judge-nav" class="hidden space-y-1.5">
+          <a href="#judge-dashboard" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800/40 hover:text-white transition-all">
+            <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+            <span>Boshqaruv paneli</span>
+          </a>
+        </div>
+      </nav>
+
+      <!-- Sidebar Footer -->
+      <div class="p-4 border-t border-slate-800">
+        <div class="flex items-center gap-3 px-3 py-2 bg-slate-900/50 rounded-xl mb-3">
+          <div class="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 font-bold text-sm" id="user-avatar-initials">
+            AD
+          </div>
+          <div class="flex-1 min-w-0">
+            <h4 class="text-sm font-semibold text-white truncate" id="user-display-name">Administrator</h4>
+            <p class="text-[11px] font-medium text-slate-400" id="user-display-role">Admin</p>
+          </div>
+        </div>
+        <button id="logout-button" 
+          class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-red-950/30 hover:bg-red-900/40 text-red-200 hover:text-white rounded-xl text-sm font-semibold border border-red-500/10 hover:border-red-500/25 transition-all">
+          <i data-lucide="log-out" class="w-4 h-4"></i>
+          <span>Tizimdan chiqish</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+      
+      <!-- Top Mobile Bar -->
+      <header class="h-16 bg-[#080d1c] border-b border-slate-800 flex items-center justify-between px-6 lg:hidden shrink-0 no-print">
+        <button id="mobile-sidebar-open" class="text-slate-400 hover:text-white">
+          <i data-lucide="menu" class="w-6 h-6"></i>
+        </button>
+        <span class="text-lg font-bold text-white" id="mobile-view-title">Boshqaruv paneli</span>
+        <div class="w-6 h-6"></div> <!-- spacer -->
+      </header>
+
+      <!-- View Containers -->
+      <div id="content-area" class="flex-1 p-4 sm:p-6 lg:p-8 animate-fade-in">
+        
+        <!-- ---------------------------------------- -->
+        <!-- ADMIN: DASHBOARD VIEW -->
+        <!-- ---------------------------------------- -->
+        <div id="admin-dashboard-view" class="hidden space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 class="text-2xl sm:text-3xl font-extrabold text-white">Boshqaruv paneli</h1>
+              <p class="text-slate-400 text-sm mt-1">Loyiha baholash tizimi ko'rsatkichlari</p>
+            </div>
+          </div>
+          <!-- Stats Grid -->
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-4" id="admin-stats-cards">
+            <!-- Loaded dynamically -->
+          </div>
+          <!-- Recent Evaluations Table -->
+          <div class="glass-panel rounded-2xl shadow-xl overflow-hidden">
+            <div class="px-6 py-5 border-b border-slate-800">
+              <h3 class="text-lg font-semibold text-white">Oxirgi baholashlar</h3>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="bg-slate-900/40 text-slate-400 text-xs font-semibold uppercase tracking-wider border-b border-slate-800">
+                    <th class="px-6 py-4">Guruh / Loyiha</th>
+                    <th class="px-6 py-4">Hakam</th>
+                    <th class="px-6 py-4">O'rtacha ball</th>
+                    <th class="px-6 py-4">Izoh</th>
+                    <th class="px-6 py-4">Sana</th>
+                  </tr>
+                </thead>
+                <tbody id="recent-evaluations-list" class="divide-y divide-slate-800/60 text-sm text-slate-300">
+                  <!-- Loaded dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ---------------------------------------- -->
+        <!-- ADMIN: CLASSES VIEW -->
+        <!-- ---------------------------------------- -->
+        <div id="admin-classes-view" class="hidden space-y-6">
+          <div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-white">Sinflar boshqaruvi</h1>
+            <p class="text-slate-400 text-sm mt-1">Baholanadigan sinflarni ro'yxatdan o'tkazish va o'chirish</p>
+          </div>
+          
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Left: Add Class form -->
+            <div class="glass-panel p-6 rounded-2xl shadow-xl h-fit">
+              <h3 class="text-lg font-semibold text-white mb-4">Sinf yaratish</h3>
+              <form id="add-class-form" class="space-y-4">
+                <div>
+                  <label for="class-name" class="block text-sm font-medium text-slate-300 mb-1.5">Sinf nomi</label>
+                  <input type="text" id="class-name" required class="glass-input w-full px-4 py-2.5 rounded-xl text-sm placeholder-slate-500" placeholder="Masalan: 9-A, 10-B">
+                </div>
+                <button type="submit" class="w-full py-2.5 bg-emerald-500 hover:bg-emerald-400 text-white font-medium rounded-xl text-sm transition flex items-center justify-center gap-2">
+                  <i data-lucide="plus" class="w-4 h-4"></i>
+                  <span>Sinf qo'shish</span>
+                </button>
+              </form>
+            </div>
+            
+            <!-- Right: Classes list -->
+            <div class="lg:col-span-2 glass-panel rounded-2xl shadow-xl overflow-hidden">
+              <div class="px-6 py-5 border-b border-slate-800">
+                <h3 class="text-lg font-semibold text-white">Mavjud sinflar</h3>
+              </div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                  <thead>
+                    <tr class="bg-slate-900/40 text-slate-400 text-xs font-semibold uppercase tracking-wider border-b border-slate-800">
+                      <th class="px-6 py-4">Nomi</th>
+                      <th class="px-6 py-4">Guruhlar soni</th>
+                      <th class="px-6 py-4">Kiritilgan sana</th>
+                      <th class="px-6 py-4 text-right">Amallar</th>
+                    </tr>
+                  </thead>
+                  <tbody id="classes-table-body" class="divide-y divide-slate-800/60 text-sm text-slate-300">
+                    <!-- Loaded dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ---------------------------------------- -->
+        <!-- ADMIN: GROUPS VIEW -->
+        <!-- ---------------------------------------- -->
+        <div id="admin-groups-view" class="hidden space-y-6">
+          <div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-white">Guruhlar boshqaruvi</h1>
+            <p class="text-slate-400 text-sm mt-1">Loyiha jamoalari va ularga biriktirilgan hakamlarni boshqarish</p>
+          </div>
+          
+          <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            <!-- Left: Add Group form -->
+            <div class="glass-panel p-6 rounded-2xl shadow-xl h-fit">
+              <h3 class="text-lg font-semibold text-white mb-4">Guruh / Loyiha yaratish</h3>
+              <form id="add-group-form" class="space-y-4">
+                <div>
+                  <label for="group-name" class="block text-sm font-medium text-slate-300 mb-1.5">Guruh nomi</label>
+                  <input type="text" id="group-name" required class="glass-input w-full px-4 py-2.5 rounded-xl text-sm placeholder-slate-500" placeholder="Masalan: 1-guruh, Alfa">
+                </div>
+                <div>
+                  <label for="group-project-name" class="block text-sm font-medium text-slate-300 mb-1.5">Loyiha nomi</label>
+                  <input type="text" id="group-project-name" required class="glass-input w-full px-4 py-2.5 rounded-xl text-sm placeholder-slate-500" placeholder="Loyiha taqdimot nomi">
+                </div>
+                <div>
+                  <label for="group-class-select" class="block text-sm font-medium text-slate-300 mb-1.5">Sinf</label>
+                  <select id="group-class-select" required class="glass-input w-full px-4 py-2.5 rounded-xl text-sm text-slate-300">
+                    <option value="">Sinfni tanlang</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-slate-300 mb-1.5">Guruh a'zolari (o'quvchilar)</label>
+                  <div id="members-inputs-container" class="space-y-2">
+                    <input type="text" class="group-member-input glass-input w-full px-4 py-2 rounded-xl text-sm placeholder-slate-500" placeholder="Ism familiya">
+                  </div>
+                  <button type="button" id="add-member-input-btn" class="mt-2 text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1 font-semibold">
+                    <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> A'zo qo'shish
+                  </button>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-slate-300 mb-1.5">Biriktirilgan hakamlar</label>
+                  <div id="judges-checkbox-container" class="space-y-2 max-h-36 overflow-y-auto bg-slate-950/30 p-3 rounded-xl border border-slate-800">
+                    <!-- Judges checkboxes -->
+                  </div>
+                </div>
+                <button type="submit" class="w-full py-2.5 bg-emerald-500 hover:bg-emerald-400 text-white font-medium rounded-xl text-sm transition flex items-center justify-center gap-2">
+                  <i data-lucide="plus" class="w-4 h-4"></i>
+                  <span>Guruh yaratish</span>
+                </button>
+              </form>
+            </div>
+            
+            <!-- Right: Groups list -->
+            <div class="xl:col-span-2 glass-panel rounded-2xl shadow-xl overflow-hidden">
+              <div class="px-6 py-5 border-b border-slate-800">
+                <h3 class="text-lg font-semibold text-white">Mavjud guruhlar</h3>
+              </div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                  <thead>
+                    <tr class="bg-slate-900/40 text-slate-400 text-xs font-semibold uppercase tracking-wider border-b border-slate-800">
+                      <th class="px-6 py-4">Guruh va Sinf</th>
+                      <th class="px-6 py-4">Loyiha nomi</th>
+                      <th class="px-6 py-4">A'zolari</th>
+                      <th class="px-6 py-4">Hakamlari</th>
+                      <th class="px-6 py-4 text-right">Amallar</th>
+                    </tr>
+                  </thead>
+                  <tbody id="groups-table-body" class="divide-y divide-slate-800/60 text-sm text-slate-300">
+                    <!-- Loaded dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ---------------------------------------- -->
+        <!-- ADMIN: JUDGES VIEW -->
+        <!-- ---------------------------------------- -->
+        <div id="admin-judges-view" class="hidden space-y-6">
+          <div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-white">Hakamlar boshqaruvi</h1>
+            <p class="text-slate-400 text-sm mt-1">Loyiha baholovchi hakamlarni qo'shish va hisoblarini o'chirish</p>
+          </div>
+          
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Left: Add Judge form -->
+            <div class="glass-panel p-6 rounded-2xl shadow-xl h-fit">
+              <h3 class="text-lg font-semibold text-white mb-4">Hakam ro'yxatdan o'tkazish</h3>
+              <form id="add-judge-form" class="space-y-4">
+                <div>
+                  <label for="judge-firstname" class="block text-sm font-medium text-slate-300 mb-1.5">Ism</label>
+                  <input type="text" id="judge-firstname" required class="glass-input w-full px-4 py-2.5 rounded-xl text-sm placeholder-slate-500" placeholder="Ism">
+                </div>
+                <div>
+                  <label for="judge-lastname" class="block text-sm font-medium text-slate-300 mb-1.5">Familiya</label>
+                  <input type="text" id="judge-lastname" required class="glass-input w-full px-4 py-2.5 rounded-xl text-sm placeholder-slate-500" placeholder="Familiya">
+                </div>
+                <div>
+                  <label for="judge-username" class="block text-sm font-medium text-slate-300 mb-1.5">Foydalanuvchi nomi</label>
+                  <input type="text" id="judge-username" required class="glass-input w-full px-4 py-2.5 rounded-xl text-sm placeholder-slate-500" placeholder="Foydalanuvchi nomi">
+                </div>
+                <div>
+                  <label for="judge-password" class="block text-sm font-medium text-slate-300 mb-1.5">Parol</label>
+                  <input type="password" id="judge-password" required class="glass-input w-full px-4 py-2.5 rounded-xl text-sm placeholder-slate-500" placeholder="Parol">
+                </div>
+                <button type="submit" class="w-full py-2.5 bg-emerald-500 hover:bg-emerald-400 text-white font-medium rounded-xl text-sm transition flex items-center justify-center gap-2">
+                  <i data-lucide="plus" class="w-4 h-4"></i>
+                  <span>Hakamni qo'shish</span>
+                </button>
+              </form>
+            </div>
+            
+            <!-- Right: Judges list -->
+            <div class="lg:col-span-2 glass-panel rounded-2xl shadow-xl overflow-hidden">
+              <div class="px-6 py-5 border-b border-slate-800">
+                <h3 class="text-lg font-semibold text-white">Hakamlar ro'yxati</h3>
+              </div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                  <thead>
+                    <tr class="bg-slate-900/40 text-slate-400 text-xs font-semibold uppercase tracking-wider border-b border-slate-800">
+                      <th class="px-6 py-4">F.I.SH</th>
+                      <th class="px-6 py-4">Foydalanuvchi nomi</th>
+                      <th class="px-6 py-4 text-right">Amallar</th>
+                    </tr>
+                  </thead>
+                  <tbody id="judges-table-body" class="divide-y divide-slate-800/60 text-sm text-slate-300">
+                    <!-- Loaded dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ---------------------------------------- -->
+        <!-- ADMIN: EVALUATIONS HISTORY VIEW -->
+        <!-- ---------------------------------------- -->
+        <div id="admin-evaluations-view" class="hidden space-y-6">
+          <div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-white">Baholashlar tarixi</h1>
+            <p class="text-slate-400 text-sm mt-1">Hakamlar tomonidan kiritilgan barcha baholar va izohlar jurnali</p>
+          </div>
+          
+          <!-- Filter bar -->
+          <div class="glass-panel p-4 rounded-xl flex flex-col sm:flex-row gap-4 items-center justify-between">
+            <div class="relative w-full sm:max-w-xs">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                <i data-lucide="search" class="w-4 h-4"></i>
+              </span>
+              <input type="text" id="evals-search-input" class="glass-input w-full pl-9 pr-4 py-2 rounded-xl text-sm" placeholder="Guruh yoki hakamni qidirish...">
+            </div>
+            
+            <div class="flex gap-2 w-full sm:w-auto">
+              <select id="evals-class-filter" class="glass-input px-3 py-2 rounded-xl text-sm text-slate-300 w-full sm:w-auto">
+                <option value="">Sinf bo'yicha</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="glass-panel rounded-2xl shadow-xl overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="bg-slate-900/40 text-slate-400 text-xs font-semibold uppercase tracking-wider border-b border-slate-800">
+                    <th class="px-6 py-4">Guruh</th>
+                    <th class="px-6 py-4">Hakam</th>
+                    <th class="px-6 py-4 text-center">Batafsil ballar</th>
+                    <th class="px-6 py-4 text-center">Jami ball</th>
+                    <th class="px-6 py-4">Izoh</th>
+                    <th class="px-6 py-4">Sana</th>
+                  </tr>
+                </thead>
+                <tbody id="evaluations-table-body" class="divide-y divide-slate-800/60 text-sm text-slate-300">
+                  <!-- Loaded dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ---------------------------------------- -->
+        <!-- ADMIN: RANKINGS (LEADERBOARD) VIEW -->
+        <!-- ---------------------------------------- -->
+        <div id="admin-rankings-view" class="hidden space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 class="text-2xl sm:text-3xl font-extrabold text-white">Liderlar jadvali</h1>
+              <p class="text-slate-400 text-sm mt-1">Loyihalar reytingi va umumiy natijalar</p>
+            </div>
+            
+            <button id="export-pdf-btn" class="no-print bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition-all duration-200 flex items-center justify-center gap-2">
+              <i data-lucide="file-text" class="w-4 h-4"></i>
+              <span>PDF ko'rinishida yuklab olish</span>
+            </button>
+          </div>
+
+          <!-- Rankings Filter -->
+          <div class="no-print glass-panel p-4 rounded-xl flex flex-col sm:flex-row gap-4 items-center justify-between">
+            <div class="flex gap-2 w-full sm:w-auto">
+              <select id="rankings-class-filter" class="glass-input px-3 py-2 rounded-xl text-sm text-slate-300 w-full sm:w-auto">
+                <option value="">Barcha sinflar reytingi</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="glass-panel rounded-2xl shadow-xl overflow-hidden print-card" id="rankings-print-area">
+            <!-- Print specific header, hidden on screen -->
+            <div class="hidden print-header p-6 text-center text-black">
+              <h1 class="text-2xl font-bold uppercase">JudgeHub Loyihalar Reytingi</h1>
+              <p class="text-sm text-gray-600 mt-1" id="print-date-text"></p>
+            </div>
+            
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse print-table">
+                <thead>
+                  <tr class="bg-slate-900/40 text-slate-400 text-xs font-semibold uppercase tracking-wider border-b border-slate-800">
+                    <th class="px-6 py-4 text-center w-16">O'rin</th>
+                    <th class="px-6 py-4">Guruh</th>
+                    <th class="px-6 py-4">Loyiha nomi</th>
+                    <th class="px-6 py-4">Sinf</th>
+                    <th class="px-6 py-4 text-center">Hakamlar soni</th>
+                    <th class="px-6 py-4 text-center">Jami o'rtacha ball (max 50)</th>
+                    <th class="px-6 py-4 text-center">O'rtacha ball (max 10)</th>
+                  </tr>
+                </thead>
+                <tbody id="rankings-table-body" class="divide-y divide-slate-800/60 text-sm text-slate-300">
+                  <!-- Loaded dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ---------------------------------------- -->
+        <!-- ADMIN: STATISTICS VIEW -->
+        <!-- ---------------------------------------- -->
+        <div id="admin-statistics-view" class="hidden space-y-6">
+          <div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-white">Statistika diagrammalari</h1>
+            <p class="text-slate-400 text-sm mt-1">Mezonlar bo'yicha o'rtacha ballar tahlili</p>
+          </div>
+          
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Left chart: categories breakdown -->
+            <div class="lg:col-span-2 glass-panel p-6 rounded-2xl shadow-xl flex flex-col justify-between">
+              <div>
+                <h3 class="text-lg font-semibold text-white mb-2">Mezonlar bo'yicha umumiy o'rtacha</h3>
+                <p class="text-slate-400 text-xs mb-4">Hamma loyihalarning 5 ta asosiy yo'nalishdagi o'rtacha ko'rsatkichi</p>
+              </div>
+              <div class="relative h-64 sm:h-80 w-full flex items-center justify-center">
+                <canvas id="category-radar-chart"></canvas>
+              </div>
+            </div>
+
+            <!-- Right list: criteria indicators -->
+            <div class="glass-panel p-6 rounded-2xl shadow-xl" id="category-averages-widgets">
+              <!-- Loaded dynamically -->
+            </div>
+          </div>
+
+          <!-- Category Breakdown by Group table -->
+          <div class="glass-panel rounded-2xl shadow-xl overflow-hidden">
+            <div class="px-6 py-5 border-b border-slate-800">
+              <h3 class="text-lg font-semibold text-white">Guruhlar bo'yicha toifalar tahlili</h3>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="bg-slate-900/40 text-slate-400 text-[10px] sm:text-xs font-semibold uppercase tracking-wider border-b border-slate-800">
+                    <th class="px-4 py-4">Guruh</th>
+                    <th class="px-4 py-4">Sinf</th>
+                    <th class="px-4 py-4 text-center bg-emerald-500/5 text-emerald-300">Funksionallik</th>
+                    <th class="px-4 py-4 text-center bg-blue-500/5 text-blue-300">Arxitektura</th>
+                    <th class="px-4 py-4 text-center bg-indigo-500/5 text-indigo-300">Tezlik</th>
+                    <th class="px-4 py-4 text-center bg-purple-500/5 text-purple-300">Xavfsizlik</th>
+                    <th class="px-4 py-4 text-center bg-pink-500/5 text-pink-300">UI/UX</th>
+                    <th class="px-4 py-4 text-center font-bold text-white">Jami ball</th>
+                  </tr>
+                </thead>
+                <tbody id="statistics-groups-table-body" class="divide-y divide-slate-800/60 text-sm text-slate-300">
+                  <!-- Loaded dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ---------------------------------------- -->
+        <!-- JUDGE: DASHBOARD VIEW -->
+        <!-- ---------------------------------------- -->
+        <div id="judge-dashboard-view" class="hidden space-y-6">
+          <div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-white" id="judge-welcome-title">Hakam Boshqaruv Paneli</h1>
+            <p class="text-slate-400 text-sm mt-1">Sizga biriktirilgan va baholanadigan loyihalar ro'yxati</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="judge-assigned-groups">
+            <!-- Loaded dynamically -->
+          </div>
+        </div>
+
+        <!-- ---------------------------------------- -->
+        <!-- JUDGE: GROUP DETAIL VIEW -->
+        <!-- ---------------------------------------- -->
+        <div id="judge-group-detail-view" class="hidden space-y-6">
+          <div class="flex items-center gap-3">
+            <button class="back-to-dashboard-btn text-slate-400 hover:text-white p-1 rounded-lg bg-slate-900/40 border border-slate-800 transition">
+              <i data-lucide="arrow-left" class="w-5 h-5"></i>
+            </button>
+            <div>
+              <h1 class="text-2xl sm:text-3xl font-extrabold text-white" id="detail-group-title">Loyiha tafsilotlari</h1>
+              <p class="text-slate-400 text-sm mt-1" id="detail-group-subtitle">Guruh a'zolari va oldingi baholar</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Left: info and comments -->
+            <div class="lg:col-span-2 space-y-6">
+              <!-- Team info -->
+              <div class="glass-panel p-6 rounded-2xl shadow-xl">
+                <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                  <i data-lucide="users" class="w-5 h-5 text-emerald-400"></i>
+                  <span>Guruh a'zolari</span>
+                </h3>
+                <div class="flex flex-wrap gap-2.5" id="detail-members-list">
+                  <!-- Members -->
+                </div>
+              </div>
+
+              <!-- Other comments -->
+              <div class="glass-panel p-6 rounded-2xl shadow-xl">
+                <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                  <i data-lucide="message-square" class="w-5 h-5 text-blue-400"></i>
+                  <span>Boshqa hakamlar izohlari</span>
+                </h3>
+                <div class="space-y-4" id="detail-other-comments">
+                  <!-- Comments -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: Evaluation Status/Action -->
+            <div class="glass-panel p-6 rounded-2xl shadow-xl flex flex-col justify-between h-fit">
+              <div>
+                <h3 class="text-lg font-semibold text-white mb-2 flex items-center gap-2">
+                  <i data-lucide="check-square" class="w-5 h-5 text-emerald-400"></i>
+                  <span>Baholash holati</span>
+                </h3>
+                <p class="text-slate-400 text-xs mb-6">Ushbu loyihani baholash holati haqida ma'lumot</p>
+                
+                <div id="detail-eval-status-box" class="p-4 rounded-xl border mb-6 text-center">
+                  <!-- Status text & details -->
+                </div>
+              </div>
+
+              <button id="start-evaluation-btn" class="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-xl text-sm transition-all duration-200 hover:-translate-y-0.5 shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2">
+                <i data-lucide="edit" class="w-4 h-4"></i>
+                <span id="start-evaluation-btn-text">Loyiha baholash</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ---------------------------------------- -->
+        <!-- JUDGE: EVALUATE FORM VIEW -->
+        <!-- ---------------------------------------- -->
+        <div id="judge-evaluate-view" class="hidden space-y-6">
+          <div class="flex items-center gap-3">
+            <button class="back-to-group-detail-btn text-slate-400 hover:text-white p-1 rounded-lg bg-slate-900/40 border border-slate-800 transition">
+              <i data-lucide="arrow-left" class="w-5 h-5"></i>
+            </button>
+            <div>
+              <h1 class="text-2xl sm:text-3xl font-extrabold text-white" id="eval-form-title">Loyihani baholash</h1>
+              <p class="text-slate-400 text-sm mt-1" id="eval-form-subtitle">Mezonlar bo'yicha ball qo'yish (1 dan 10 gacha)</p>
+            </div>
+          </div>
+
+          <form id="evaluation-submit-form" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Left: Sliders -->
+            <div class="lg:col-span-2 space-y-4">
+              <!-- Functionality slider -->
+              <div class="glass-panel p-5 rounded-xl border border-slate-800">
+                <div class="flex items-center justify-between mb-2">
+                  <h4 class="text-sm font-semibold text-white flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-xs text-emerald-400 font-bold">1</span>
+                    Funksionallik (Loyiha vazifasining ishlashi)
+                  </h4>
+                  <span id="score-val-functionality" class="text-lg font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20 w-10 text-center">5</span>
+                </div>
+                <input type="range" id="score-functionality" min="1" max="10" value="5" class="w-full accent-emerald-500 cursor-pointer h-2 bg-slate-900 rounded-lg appearance-none">
+              </div>
+
+              <!-- Architecture slider -->
+              <div class="glass-panel p-5 rounded-xl border border-slate-800">
+                <div class="flex items-center justify-between mb-2">
+                  <h4 class="text-sm font-semibold text-white flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-xs text-blue-400 font-bold">2</span>
+                    Kod arxitekturasi (Kod tozaligi, tuzilishi)
+                  </h4>
+                  <span id="score-val-architecture" class="text-lg font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-md border border-blue-500/20 w-10 text-center">5</span>
+                </div>
+                <input type="range" id="score-architecture" min="1" max="10" value="5" class="w-full accent-blue-500 cursor-pointer h-2 bg-slate-900 rounded-lg appearance-none">
+              </div>
+
+              <!-- Performance slider -->
+              <div class="glass-panel p-5 rounded-xl border border-slate-800">
+                <div class="flex items-center justify-between mb-2">
+                  <h4 class="text-sm font-semibold text-white flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-xs text-indigo-400 font-bold">3</span>
+                    Tezlik va unumdorlik (Server sekinlashmasligi, tez yuklanish)
+                  </h4>
+                  <span id="score-val-performance" class="text-lg font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-md border border-indigo-500/20 w-10 text-center">5</span>
+                </div>
+                <input type="range" id="score-performance" min="1" max="10" value="5" class="w-full accent-indigo-500 cursor-pointer h-2 bg-slate-900 rounded-lg appearance-none">
+              </div>
+
+              <!-- Security slider -->
+              <div class="glass-panel p-5 rounded-xl border border-slate-800">
+                <div class="flex items-center justify-between mb-2">
+                  <h4 class="text-sm font-semibold text-white flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-xs text-purple-400 font-bold">4</span>
+                    Xavfsizlik (Xatoliklar, ma'lumotlar himoyasi)
+                  </h4>
+                  <span id="score-val-security" class="text-lg font-bold text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded-md border border-purple-500/20 w-10 text-center">5</span>
+                </div>
+                <input type="range" id="score-security" min="1" max="10" value="5" class="w-full accent-purple-500 cursor-pointer h-2 bg-slate-900 rounded-lg appearance-none">
+              </div>
+
+              <!-- UI/UX slider -->
+              <div class="glass-panel p-5 rounded-xl border border-slate-800">
+                <div class="flex items-center justify-between mb-2">
+                  <h4 class="text-sm font-semibold text-white flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-lg bg-pink-500/10 border border-pink-500/20 flex items-center justify-center text-xs text-pink-400 font-bold">5</span>
+                    Dizayn va foydalanish qulayligi (UI/UX)
+                  </h4>
+                  <span id="score-val-ui-ux" class="text-lg font-bold text-pink-400 bg-pink-500/10 px-2 py-0.5 rounded-md border border-pink-500/20 w-10 text-center">5</span>
+                </div>
+                <input type="range" id="score-ui-ux" min="1" max="10" value="5" class="w-full accent-pink-500 cursor-pointer h-2 bg-slate-900 rounded-lg appearance-none">
+              </div>
+            </div>
+
+            <!-- Right: Comment and actions -->
+            <div class="glass-panel p-6 rounded-2xl shadow-xl flex flex-col justify-between h-fit space-y-6">
+              <div class="space-y-4">
+                <h3 class="text-lg font-semibold text-white">Baholash xulosasi</h3>
+                
+                <div>
+                  <label for="eval-comment" class="block text-sm font-medium text-slate-300 mb-1.5">Izoh (ixtiyoriy)</label>
+                  <textarea id="eval-comment" rows="4" class="glass-input w-full px-4 py-2.5 rounded-xl text-sm placeholder-slate-500" placeholder="Loyihaning yutuqlari va xatolari haqida izoh qoldiring..."></textarea>
+                </div>
+
+                <div class="p-4 bg-slate-950/30 rounded-xl border border-slate-800/80">
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm text-slate-400 font-medium">Jami ball:</span>
+                    <span class="text-2xl font-black text-white" id="eval-total-score">25 <span class="text-sm text-slate-400 font-medium">/ 50</span></span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex flex-col gap-2.5">
+                <button type="submit" class="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-xl text-sm transition-all duration-200 hover:-translate-y-0.5 shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2">
+                  <i data-lucide="check-circle" class="w-4 h-4"></i>
+                  <span>Bahoni yuborish</span>
+                </button>
+                <button type="button" class="back-to-group-detail-btn w-full py-3 bg-slate-900/60 hover:bg-slate-800/80 border border-slate-800 text-slate-400 hover:text-white font-semibold rounded-xl text-sm transition">
+                  Bekor qilish
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+      </div>
+
+      <!-- Toast Notification Container -->
+      <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-[calc(100%-2rem)] w-80 no-print">
+        <!-- Dynamic toasts -->
+      </div>
+    </main>
+
+  </div>
+
+  <!-- Shared App JS -->
+  <script src="js/app.js"></script>
+</body>
+</html>

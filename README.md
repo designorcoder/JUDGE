@@ -1,99 +1,102 @@
-# JudgeHub - Loyiha Baholash Tizimi
+# JudgeHub - Loyihalarni Baholash Tizimi
 
-JudgeHub — bu maktablar, universitetlar va turli tadbirlar uchun loyihalarni hakamlar tomonidan baholash tizimi. Tizim to'liq **O'zbek tilida (Lotin)** yozilgan, zamonaviy dizayn, moslashuvchan (responsive) interfeys va mukammal boshqaruv paneliga ega.
+JudgeHub — bu maktablar, universitetlar va turli tadbirlar uchun loyihalarni hakamlar tomonidan baholash tizimi. Tizim to'liq **Node.js (Express) API** va **Single Page Application (SPA) Frontend** asosida qayta yozilgan hamda **O'zbek tilida (Lotin)** mukammal moslashtirilgan.
+
+Ushbu loyiha Vercel serverless platformalarida tez va barqaror ishlash hamda mahalliy muhitda SQLite yordamida hech qanday ortiqcha sozlamalarsiz ishga tushirish uchun optimallashtirilgan.
+
+---
 
 ## Asosiy Imkoniyatlar
 
-### Admin Paneli (Boshqaruv):
-* Sinflar yaratish (masalan: 9-A, 10-B, 11-D)
-* Har bir sinf ichida guruhlar/loyihalar yaratish
-* Guruhlarga hakamlarni biriktirish
-* Guruh a'zolarini (o'quvchilarni) va loyiha nomlarini kiritish
-* Hakamlarni boshqarish (qo'shish, o'chirish)
-* Keraksiz loyiha va sinflarni o'chirish
-* Barcha baholash natijalarini ko'rish va liderlar jadvali (Leaderboard)
-* Natijalarni **PDF formatda yuklab olish**
-* Statistik kartalar va chiroyli diagrammalar (Charts)
+### 🔑 Tizimga Kirish (Authentication)
+* Xavfsiz login/parol tizimi hamda JWT (JSON Web Token) orqali sessiyani boshqarish.
+* Foydalanuvchi roliga (Admin yoki Hakam) qarab interfeysning dinamik o'zgarishi.
 
-### Hakamlar Paneli:
-* Xavfsiz tizimga kirish (Login)
-* Faqat o'ziga biriktirilgan guruhlarni ko'rish
-* Har bir loyihani 5 ta kategoriya bo'yicha (1 dan 10 gacha ball) baholash
-* Baholarga izoh qoldirish
+### 🛡️ Admin Paneli (Boshqaruv):
+* **Dashboard (Boshqaruv paneli)**: Tizim ko'rsatkichlari (sinflar, guruhlar, hakamlar, baholangan loyihalar soni) va oxirgi baholangan loyihalar jurnali.
+* **Sinflar boshqaruvi**: Yangi sinflar yaratish va ularni guruhlari bilan birga o'chirish.
+* **Guruhlar / Loyihalar boshqaruvi**: Loyiha jamoalarini yaratish, a'zolarini kiritish hamda ularni baholash uchun hakamlarni biriktirish.
+* **Hakamlar boshqaruvi**: Tizimga yangi hakamlarni qo'shish va ularni o'chirish.
+* **Baholar jurnali**: Hakamlar kiritgan barcha batafsil ballar va izohlar jurnali, qidirish va sinf bo'yicha filterlash.
+* **Liderlar jadvali (Reyting)**: Loyihalarning to'plagan umumiy ballari reytingi va ularni **PDF formatida yuklab olish** (chop etish optimalligi).
+* **Statistika**: 5 ta mezon (Funksionallik, Kod arxitekturasi, Tezlik, Xavfsizlik, UI/UX) bo'yicha o'rtacha ballar tahlili va Chart.js radar diagrammasi.
 
----
-
-## Mahalliy ishga tushirish (Local Run)
-
-1. **Kutubxonalarni yuklash:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-2. **Ma'lumotlar bazasini sozlash va migratsiyalarni ishga tushirish:**
-   ```bash
-   python manage.py migrate
-   ```
-
-3. **Admin (Superuser) yaratish:**
-   ```bash
-   python manage.py createsuperuser
-   ```
-
-4. **Serverni ishga tushirish:**
-   ```bash
-   python manage.py runserver
-   ```
-   Tizimga brauzer orqali kirish: `http://127.0.0.1:8000/`
+### 👨‍⚖️ Hakamlar Paneli:
+* Faqat o'ziga biriktirilgan loyihalar ro'yxatini ko'rish.
+* Loyihalarni baholash holatini kuzatish (kutilmoqda yoki baholangan).
+* Loyiha uchun 5 ta kategoriya bo'yicha (1 dan 10 gacha) ball berish va izoh qoldirish (tahrirlash imkoniyati bilan).
+* Boshqa hakamlarning izohlarini ko'rish.
 
 ---
 
-## Production Deployment (Serverga Joylash)
+## 🛠️ Texnologiyalar Tizimi
 
-Loyiha **Django Monolit** arxitekturasida yaratilgan. Ya'ni, Backend (Django kodlari) va Frontend (HTML, CSS/Tailwind, JavaScript) birgalikda ishlaydi. Shuning uchun ularni alohida-alohida ajratib bo'lmaydi (Vercel'ga faqat frontend, Render'ga faqat backend qilib).
-
-Buning o'rniga, quyidagi ikki xil usuldan birini tanlab loyihani to'liq joylashtirishingiz mumkin:
-
-### 1-Usul: Render.com orqali to'liq deploy qilish (Tavsiya etiladi)
-Render loyihaning backend qismini ham, frontend qismini ham bitta umumiy serverda juda oson ishga tushirib beradi.
-
-#### A. PostgreSQL Ma'lumotlar Bazasini yaratish:
-1. [Render.com](https://render.com) saytiga kiring va profilingizga kiring.
-2. **New +** tugmasini bosing va **PostgreSQL** ni tanlang.
-3. Ma'lumotlar bazasiga nom bering va **Create Database** tugmasini bosing.
-4. Baza yaratilgach, **External Database URL** manzilini nusxalab oling (Uni keyingi bosqichda ishlatamiz).
-
-#### B. Web Service yaratish:
-1. Render boshqaruv panelida **New +** -> **Web Service** ni tanlang.
-2. GitHub profilingizni ulab, `designorcoder/JUDGE` repozitoriyasini tanlang.
-3. Quyidagi sozlamalarni kiriting:
-   * **Language**: `Python`
-   * **Branch**: `main`
-   * **Build Command**: 
-     ```bash
-     pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate
-     ```
-   * **Start Command**: 
-     ```bash
-     gunicorn config.wsgi:application
-     ```
-4. **Advanced** bo'limiga o'tib, **Environment Variables** (muhit o'zgaruvchilari) ni qo'shing:
-   * `SECRET_KEY` = `sizning_maxfiy_kalitingiz` (ixtiyoriy uzun matn)
-   * `DEBUG` = `False`
-   * `ALLOWED_HOSTS` = `*` (yoki Render bergan havola manzili)
-   * `DATABASE_URL` = `nusxalab_olingan_database_url` (A bo'limidagi PostgreSQL havolasi)
-5. **Create Web Service** tugmasini bosing. Server ishga tushadi va tayyor havolani taqdim etadi.
+* **Frontend**: HTML5, Vanilla JS (SPA Hash-Routing), Tailwind CSS, Lucide Icons, Chart.js.
+* **Backend**: Node.js, Express.js (REST API).
+* **Database (Ma'lumotlar bazasi)**:
+  * **Mahalliy (Local)**: SQLite (fayl ko'rinishida `database.sqlite` avtomatik yaratiladi).
+  * **Production (Server)**: PostgreSQL (`pg` moduli yordamida).
 
 ---
 
-### 2-Usul: Vercel orqali deploy qilish
-Loyiha tarkibida Vercel serverless Python uchun maxsus `vercel.json` sozlamalari mavjud. Bu usulda ham ma'lumotlar bazasi sifatida tashqi PostgreSQL (masalan, Neon.tech yoki Render PostgreSQL) bazasi kerak bo'ladi.
+## 🚀 Mahalliy Ishga Tushirish (Local Run)
 
-1. [Vercel](https://vercel.com) saytiga kiring.
-2. **Add New** -> **Project** tugmasini bosing va GitHub'dagi `designorcoder/JUDGE` repozitoriyasini tanlang.
-3. **Environment Variables** bo'limida quyidagilarni sozlang:
-   * `SECRET_KEY` = `sizning_maxfiy_kalitingiz`
-   * `DEBUG` = `False`
-   * `ALLOWED_HOSTS` = `*`
-   * `DATABASE_URL` = `tashqi_postgresql_database_url` (Neon.tech yoki Render'da ochilgan bazaning URL manzili)
-4. **Deploy** tugmasini bosing. Vercel loyihani avtomatik tarzda Serverless funksiya ko'rinishida ishga tushiradi.
+Loyiha mahalliy kompyuterda avtomatik SQLite bazasini ishlatadi va boshlang'ich ma'lumotlar (admin, demo hakamlar va sinflar) bilan to'ldiradi (Seed data).
+
+1. **Loyihani yuklab oling va kutubxonalarni o'rnating:**
+   ```bash
+   npm install
+   ```
+
+2. **Muhit o'zgaruvchilarini sozlang (ixtiyoriy):**
+   `.env.example` faylini `.env` deb nusxalab oling. Standart sozlamalar o'zi yetarli.
+
+3. **Serverni ishga tushiring:**
+   ```bash
+   npm start
+   ```
+
+4. **Brauzerda oching:**
+   `http://localhost:3000` ga kiring.
+
+### 🔑 Demo Kirish Ma'lumotlari:
+* **Administrator**:
+  * Login: `admin`
+  * Parol: `admin123`
+* **Hakam 1**:
+  * Login: `judge1`
+  * Parol: `judge123`
+* **Hakam 2**:
+  * Login: `judge2`
+  * Parol: `judge123`
+
+---
+
+## ☁️ Vercel-ga Joylash (Deployment)
+
+Loyiha Vercel platformasi uchun to'liq moslashtirilgan. Ma'lumotlar bazasi sifatida Render.com yoki Neon.tech kabi bepul PostgreSQL xizmatlaridan foydalanish tavsiya etiladi.
+
+### 1-Bosqich: PostgreSQL Bazasini Yaratish (Render.com da)
+1. [Render.com](https://render.com) saytiga kiring.
+2. **New +** -> **PostgreSQL** ni tanlang.
+3. Bazaga nom bering (masalan: `judgehub-db`) va yarating.
+4. Baza yaratilgach, uning **External Database URL** (yoki **Internal Database URL**) manzilini nusxalab oling.
+
+### 2-Bosqich: Vercel-ga yuklash
+1. [Vercel](https://vercel.com) boshqaruv paneliga kiring.
+2. **Add New** -> **Project** tugmasini bosing va loyihaning GitHub repozitoriyasini tanlang.
+3. **Environment Variables** (muhit o'zgaruvchilari) qismida quyidagi o'zgaruvchini qo'shing:
+   * `DATABASE_URL` = `nusxalab_olingan_postgresql_database_url`
+   * `JWT_SECRET` = `ixtiyoriy_murakkab_xavfsiz_kalit` (JWT tokenni imzolash uchun)
+4. **Deploy** tugmasini bosing. Vercel loyihani avtomatik tarzda sozlab, jonli havolani taqdim etadi.
+
+---
+
+## 📁 Loyiha Tuzilishi
+
+* `/api/db.js` — PostgreSQL va SQLite bazalarini avtomatik moslashtiruvchi va jadvallarni yaratuvchi driver.
+* `/api/index.js` — Tizimning Express API yo'nalishlari va boshqaruv xizmatlari.
+* `/public/index.html` — Loyihaning yagona SPA sahifasi.
+* `/public/js/app.js` — Sahifalar yo'nalishini (Routing), renderlashni, Chart.js va PDF chop etishni boshqaradigan frontend scripti.
+* `/public/css/style.css` — Glassmorphism ko'rinishidagi zamonaviy interfeys stillari.
+* `vercel.json` — Vercel marshrutlarini to'g'ri yo'naltirish konfiguratsiyasi.
