@@ -1,0 +1,237 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}JudgeHub - Loyihalarni baholash tizimi{% endblock %}</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {
+                            850: '#1e293b',
+                            900: '#0f172a',
+                            950: '#070a13',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Style Sheet -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="min-h-screen flex flex-col overflow-x-hidden">
+    {% if user.is_authenticated %}
+    <form id="logout-form" action="{% url 'logout' %}" method="post" class="hidden">
+        {% csrf_token %}
+    </form>
+    {% endif %}
+
+    <!-- TOP MOBILE BAR (hidden on desktop) -->
+    <header class="no-print lg:hidden flex items-center justify-between px-4 sm:px-6 py-3.5 bg-slate-900/90 border-b border-slate-800 backdrop-blur-md sticky top-0 z-50">
+        <div class="flex items-center space-x-3">
+            <div class="bg-gradient-to-tr from-emerald-500 to-teal-400 p-2 rounded-lg text-slate-950 font-black shadow-lg shadow-emerald-500/20">
+                <i class="fa-solid fa-gavel text-lg"></i>
+            </div>
+            <span class="text-xl font-bold tracking-tight text-white">Judge<span class="text-emerald-400">Hub</span></span>
+        </div>
+        <div class="flex items-center space-x-4">
+            {% if user.is_authenticated %}
+            <button onclick="document.getElementById('logout-form').submit();" class="text-rose-400 hover:text-rose-300 text-xs font-semibold flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-rose-500/10 border border-rose-500/20 transition-all cursor-pointer">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>Chiqish</span>
+            </button>
+            {% endif %}
+            <button id="mobile-sidebar-toggle" class="text-slate-400 hover:text-emerald-400 focus:outline-none transition-colors">
+                <i class="fa-solid fa-bars text-2xl"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- WRAPPER -->
+    <div class="flex flex-1 relative">
+        
+        <!-- SIDEBAR (desktop permanent, mobile overlay) -->
+        <aside id="sidebar" class="no-print w-64 glass-panel border-r border-slate-800/80 flex flex-col justify-between fixed lg:static top-0 bottom-0 left-0 z-40 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
+            
+            <!-- UPPER SIDEBAR -->
+            <div class="flex flex-col flex-1 py-6 px-4 overflow-y-auto">
+                <!-- Logo -->
+                <div class="hidden lg:flex items-center space-x-3 px-3 mb-8">
+                    <div class="bg-gradient-to-tr from-emerald-500 to-teal-400 p-2.5 rounded-xl text-slate-950 font-black shadow-lg shadow-emerald-500/25">
+                        <i class="fa-solid fa-gavel text-xl"></i>
+                    </div>
+                    <span class="text-2xl font-bold tracking-tight text-white">Judge<span class="text-emerald-400">Hub</span></span>
+                </div>
+
+                <!-- User Info Profile Card -->
+                {% if user.is_authenticated %}
+                <div class="mb-6 px-3 py-4 rounded-xl bg-slate-800/40 border border-slate-700/30 flex items-center justify-between">
+                    <div class="flex items-center space-x-3 overflow-hidden">
+                        <div class="w-10 h-10 rounded-full flex-shrink-0 bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold text-lg shadow-inner">
+                            {{ user.username|slice:":1"|upper }}
+                        </div>
+                        <div class="overflow-hidden">
+                            <h4 class="text-sm font-semibold text-white truncate leading-tight">{{ user.username }}</h4>
+                            <span class="text-xs text-slate-400 font-medium tracking-wide uppercase">{{ user.get_role_display }}</span>
+                        </div>
+                    </div>
+                    <button onclick="document.getElementById('logout-form').submit();" class="text-rose-400 hover:text-rose-300 p-1.5 rounded-lg hover:bg-rose-500/10 transition-colors flex-shrink-0 cursor-pointer" title="Chiqish">
+                        <i class="fa-solid fa-right-from-bracket text-sm"></i>
+                    </button>
+                </div>
+                {% endif %}
+
+                <!-- Navigation Links -->
+                <nav class="space-y-1">
+                    {% if user.is_authenticated %}
+                        {% if user.is_admin %}
+                            <!-- ADMIN NAV -->
+                            <a href="{% url 'admin_dashboard' %}" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium {% if request.resolver_match.url_name == 'admin_dashboard' %}bg-gradient-to-r from-emerald-500/10 to-transparent text-emerald-400 border-l-4 border-emerald-500 pl-3{% else %}text-slate-300 hover:bg-slate-800/30 hover:text-white{% endif %} transition-all">
+                                <i class="fa-solid fa-chart-pie w-5"></i>
+                                <span>Boshqaruv paneli</span>
+                            </a>
+                            <a href="{% url 'admin_classes' %}" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium {% if request.resolver_match.url_name == 'admin_classes' %}bg-gradient-to-r from-emerald-500/10 to-transparent text-emerald-400 border-l-4 border-emerald-500 pl-3{% else %}text-slate-300 hover:bg-slate-800/30 hover:text-white{% endif %} transition-all">
+                                <i class="fa-solid fa-school w-5"></i>
+                                <span>Sinflar</span>
+                            </a>
+                            <a href="{% url 'admin_judges' %}" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium {% if request.resolver_match.url_name == 'admin_judges' %}bg-gradient-to-r from-emerald-500/10 to-transparent text-emerald-400 border-l-4 border-emerald-500 pl-3{% else %}text-slate-300 hover:bg-slate-800/30 hover:text-white{% endif %} transition-all">
+                                <i class="fa-solid fa-user-shield w-5"></i>
+                                <span>Hakamlar</span>
+                            </a>
+                            <a href="{% url 'admin_groups' %}" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium {% if request.resolver_match.url_name == 'admin_groups' or request.resolver_match.url_name == 'admin_groups_edit' %}bg-gradient-to-r from-emerald-500/10 to-transparent text-emerald-400 border-l-4 border-emerald-500 pl-3{% else %}text-slate-300 hover:bg-slate-800/30 hover:text-white{% endif %} transition-all">
+                                <i class="fa-solid fa-users-gear w-5"></i>
+                                <span>Loyihalar / Guruhlar</span>
+                            </a>
+                            <a href="{% url 'admin_evaluations' %}" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium {% if request.resolver_match.url_name == 'admin_evaluations' %}bg-gradient-to-r from-emerald-500/10 to-transparent text-emerald-400 border-l-4 border-emerald-500 pl-3{% else %}text-slate-300 hover:bg-slate-800/30 hover:text-white{% endif %} transition-all">
+                                <i class="fa-solid fa-file-invoice w-5"></i>
+                                <span>Baholashlar</span>
+                            </a>
+                            <a href="{% url 'admin_rankings' %}" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium {% if request.resolver_match.url_name == 'admin_rankings' %}bg-gradient-to-r from-emerald-500/10 to-transparent text-emerald-400 border-l-4 border-emerald-500 pl-3{% else %}text-slate-300 hover:bg-slate-800/30 hover:text-white{% endif %} transition-all">
+                                <i class="fa-solid fa-trophy w-5"></i>
+                                <span>Liderlar jadvali</span>
+                            </a>
+                            <a href="{% url 'admin_statistics' %}" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium {% if request.resolver_match.url_name == 'admin_statistics' %}bg-gradient-to-r from-emerald-500/10 to-transparent text-emerald-400 border-l-4 border-emerald-500 pl-3{% else %}text-slate-300 hover:bg-slate-800/30 hover:text-white{% endif %} transition-all">
+                                <i class="fa-solid fa-chart-line w-5"></i>
+                                <span>Tahlil va statistika</span>
+                            </a>
+                        {% else %}
+                            <!-- JUDGE NAV -->
+                            <a href="{% url 'judge_dashboard' %}" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium {% if request.resolver_match.url_name == 'judge_dashboard' or request.resolver_match.url_name == 'judge_group_detail' or request.resolver_match.url_name == 'judge_evaluate' %}bg-gradient-to-r from-emerald-500/10 to-transparent text-emerald-400 border-l-4 border-emerald-500 pl-3{% else %}text-slate-300 hover:bg-slate-800/30 hover:text-white{% endif %} transition-all">
+                                <i class="fa-solid fa-list-check w-5"></i>
+                                <span>Biriktirilgan loyihalar</span>
+                            </a>
+                        {% endif %}
+                    {% endif %}
+                </nav>
+            </div>
+
+            <!-- LOWER SIDEBAR -->
+            <div class="p-4 border-t border-slate-800/80">
+                {% if user.is_authenticated %}
+                <button onclick="document.getElementById('logout-form').submit();" class="flex items-center justify-center space-x-2 w-full px-4 py-3 rounded-xl text-sm font-semibold text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 border border-transparent hover:border-rose-500/20 transition-all cursor-pointer">
+                     <i class="fa-solid fa-right-from-bracket text-base"></i>
+                    <span>Chiqish</span>
+                </button>
+                {% else %}
+                <a href="{% url 'login' %}" class="flex items-center justify-center space-x-2 w-full px-4 py-3 rounded-xl text-sm font-semibold bg-emerald-500 hover:bg-emerald-600 text-slate-950 transition-all shadow-lg shadow-emerald-500/10">
+                    <i class="fa-solid fa-right-to-bracket text-base"></i>
+                    <span>Kirish</span>
+                </a>
+                {% endif %}
+            </div>
+        </aside>
+
+        <!-- BACKDROP FOR MOBILE SIDEBAR -->
+        <div id="sidebar-backdrop" class="no-print fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-30 hidden lg:hidden"></div>
+
+        <!-- MAIN CONTENT AREA -->
+        <main class="flex-1 min-w-0 flex flex-col p-4 sm:p-6 lg:p-8 overflow-y-auto">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <!-- TOAST NOTIFICATIONS -->
+    {% if messages %}
+    <div id="toast-container" class="no-print fixed bottom-5 right-0 left-0 mx-auto px-4 sm:left-auto sm:right-5 sm:mx-0 sm:px-0 sm:max-w-md w-full max-w-[calc(100%-2rem)] z-50 flex flex-col space-y-3">
+        {% for message in messages %}
+        <div class="toast-item transform translate-y-5 opacity-0 transition-all duration-300 ease-out glass-panel px-4 py-3.5 rounded-xl border border-slate-700/50 shadow-2xl flex items-center justify-between" role="alert">
+            <div class="flex items-center space-x-3">
+                {% if message.tags == 'success' %}
+                    <span class="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/35 flex items-center justify-center text-emerald-400"><i class="fa-solid fa-circle-check"></i></span>
+                {% elif message.tags == 'error' %}
+                    <span class="w-8 h-8 rounded-lg bg-rose-500/20 border border-rose-500/35 flex items-center justify-center text-rose-400"><i class="fa-solid fa-circle-xmark"></i></span>
+                {% else %}
+                    <span class="w-8 h-8 rounded-lg bg-blue-500/20 border border-blue-500/35 flex items-center justify-center text-blue-400"><i class="fa-solid fa-circle-info"></i></span>
+                {% endif %}
+                <span class="text-sm font-medium text-slate-100">{{ message }}</span>
+            </div>
+            <button class="toast-close text-slate-400 hover:text-slate-200 transition-colors ml-4 focus:outline-none"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- SCRIPTS -->
+    <script>
+        // Mobile Sidebar Functionality
+        const mobileToggle = document.getElementById('mobile-sidebar-toggle');
+        const sidebar = document.getElementById('sidebar');
+        const backdrop = document.getElementById('sidebar-backdrop');
+
+        if (mobileToggle && sidebar && backdrop) {
+            function toggleSidebar() {
+                sidebar.classList.toggle('-translate-x-full');
+                backdrop.classList.toggle('hidden');
+                document.body.classList.toggle('overflow-hidden');
+            }
+
+            mobileToggle.addEventListener('click', toggleSidebar);
+            backdrop.addEventListener('click', toggleSidebar);
+        }
+
+        // Toasts Automatic Dismiss
+        document.addEventListener('DOMContentLoaded', () => {
+            const toasts = document.querySelectorAll('.toast-item');
+            
+            toasts.forEach((toast, idx) => {
+                // Staggered entry animation
+                setTimeout(() => {
+                    toast.classList.remove('translate-y-5', 'opacity-0');
+                }, idx * 100 + 50);
+
+                // Auto dismiss after 5 seconds
+                const timer = setTimeout(() => {
+                    dismissToast(toast);
+                }, 5000);
+
+                // Close button listener
+                const closeBtn = toast.querySelector('.toast-close');
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', () => {
+                        clearTimeout(timer);
+                        dismissToast(toast);
+                    });
+                }
+            });
+            
+            function dismissToast(toast) {
+                toast.classList.add('translate-y-5', 'opacity-0');
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

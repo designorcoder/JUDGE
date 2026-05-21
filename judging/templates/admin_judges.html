@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+
+{% block title %}Hakamlarni boshqarish - JudgeHub{% endblock %}
+
+{% block content %}
+<div class="space-y-8 animate-fade-in">
+    <!-- Header -->
+    <div>
+        <div class="flex items-center space-x-2.5 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+            <a href="{% url 'admin_dashboard' %}" class="hover:text-white transition-colors">Admin</a>
+            <i class="fa-solid fa-chevron-right text-[10px]"></i>
+            <span class="text-emerald-400">Hakamlar</span>
+        </div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Hakamlarni boshqarish</h1>
+        <p class="text-slate-400 text-sm mt-1">Loyihalarni baholash uchun hakamlar hisobini sozlang yoki yangilarini tizimga qo'shing.</p>
+    </div>
+
+    <!-- Main Grid: Form on Left/Right, List on opposite -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Judges List Table (Left 2 Columns) -->
+        <div class="lg:col-span-2">
+            <div class="glass-panel rounded-2xl border border-slate-800/80 overflow-hidden shadow-xl">
+                <div class="px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-800/80 bg-slate-900/40">
+                    <h3 class="font-bold text-lg text-white">Mavjud hakamlar</h3>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-900/30 text-slate-400 text-xs font-bold uppercase tracking-wider border-b border-slate-800/80">
+                                <th class="py-3 sm:py-4 px-4 sm:px-6">Hakam ismi</th>
+                                <th class="py-3 sm:py-4 px-4 sm:px-6">Foydalanuvchi nomi</th>
+                                <th class="py-3 sm:py-4 px-4 sm:px-6 text-center">Biriktirilgan loyihalar</th>
+                                <th class="py-3 sm:py-4 px-4 sm:px-6 text-right">Amallar</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800/60 text-sm">
+                            {% for j in judges %}
+                            <tr class="hover:bg-slate-800/10 transition-colors">
+                                <td class="py-3 sm:py-4 px-4 sm:px-6">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 text-sm font-bold shadow-inner">
+                                            {{ j.username|slice:":2"|upper }}
+                                        </div>
+                                        <span class="font-bold text-white">
+                                            {% if j.get_full_name %}{{ j.get_full_name }}{% else %}{{ j.username }}{% endif %}
+                                        </span>
+                                    </div>
+                                </td>
+                                <td class="py-3 sm:py-4 px-4 sm:px-6 text-slate-400 font-medium">
+                                    {{ j.username }}
+                                </td>
+                                <td class="py-3 sm:py-4 px-4 sm:px-6 text-center font-bold text-slate-300">
+                                    {{ j.group_count }}
+                                </td>
+                                <td class="py-3 sm:py-4 px-4 sm:px-6 text-right">
+                                    {% if j.username != user.username %}
+                                    <form method="post" action="{% url 'admin_judges_delete' j.pk %}" 
+                                          onsubmit="return confirm('Haqiqatan ham \'{{ j.username }}\' hakamini o\'chirmoqchimisiz? Bu uning barcha biriktirilgan loyihalar va yuborgan baholashlarini o\'chirib yuborishi mumkin.');"
+                                          class="inline-block">
+                                        {% csrf_token %}
+                                        <button type="submit" class="text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 p-2 rounded-lg transition-all text-xs font-semibold flex items-center space-x-1.5 ml-auto cursor-pointer">
+                                            <i class="fa-solid fa-trash-can"></i>
+                                            <span class="hidden sm:inline">O'chirish</span>
+                                        </button>
+                                    </form>
+                                    {% else %}
+                                    <span class="text-xs text-slate-500 italic">Siz (Joriy admin)</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="py-8 text-center text-slate-500">
+                                    <i class="fa-solid fa-user-shield text-3xl mb-3 block text-slate-600"></i>
+                                    <span class="text-sm font-semibold">Tizimda hozircha hakamlar mavjud emas. Yangi hakam yaratish uchun o'ng tomondagi shakldan foydalaning.</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Judge Form Card (Right 1 Column) -->
+        <div class="space-y-8">
+            <div class="glass-panel p-4 sm:p-6 rounded-2xl border border-slate-800/80 shadow-xl space-y-5">
+                <div class="flex items-center space-x-3 pb-3 border-b border-slate-800/50">
+                    <span class="w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-500/20 flex items-center justify-center text-emerald-400"><i class="fa-solid fa-user-plus"></i></span>
+                    <h3 class="font-bold text-lg text-white">Yangi hakam qo'shish</h3>
+                </div>
+                
+                <form method="post" action="{% url 'admin_judges' %}" class="space-y-4">
+                    {% csrf_token %}
+                    
+                    <div class="space-y-2">
+                        <label for="id_username" class="block text-sm font-semibold text-slate-300">Foydalanuvchi nomi</label>
+                        {{ form.username }}
+                        {% if form.username.errors %}
+                        <span class="text-xs text-rose-400 block mt-1">{% for error in form.username.errors %}{{ error }}{% endfor %}</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="space-y-2">
+                        <label for="id_first_name" class="block text-sm font-semibold text-slate-300">Ismi (ixtiyoriy)</label>
+                        {{ form.first_name }}
+                        {% if form.first_name.errors %}
+                        <span class="text-xs text-rose-400 block mt-1">{% for error in form.first_name.errors %}{{ error }}{% endfor %}</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="space-y-2">
+                        <label for="id_last_name" class="block text-sm font-semibold text-slate-300">Familiyasi (ixtiyoriy)</label>
+                        {{ form.last_name }}
+                        {% if form.last_name.errors %}
+                        <span class="text-xs text-rose-400 block mt-1">{% for error in form.last_name.errors %}{{ error }}{% endfor %}</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="space-y-2">
+                        <label for="id_password" class="block text-sm font-semibold text-slate-300">Parol</label>
+                        {{ form.password }}
+                        {% if form.password.errors %}
+                        <span class="text-xs text-rose-400 block mt-1">{% for error in form.password.errors %}{{ error }}{% endfor %}</span>
+                        {% endif %}
+                    </div>
+                    
+                    <button type="submit" class="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-950 font-bold py-3 px-4 rounded-xl shadow-lg shadow-emerald-500/10 transition-all text-sm flex items-center justify-center space-x-2 cursor-pointer">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <span>Hakamni saqlash</span>
+                    </button>
+                </form>
+            </div>
+            
+            <!-- Helper Note -->
+            <div class="bg-slate-900/35 border border-slate-800/80 rounded-2xl p-5 text-xs text-slate-400 space-y-2">
+                <h4 class="font-bold text-slate-300 flex items-center space-x-1.5 mb-1.5">
+                    <i class="fa-solid fa-circle-info text-emerald-400"></i>
+                    <span>Tushuntirish</span>
+                </h4>
+                <p>Hakam yaratilgandan so'ng, ushbu foydalanuvchi nomi va parol yordamida tizimga kirib, o'ziga biriktirilgan loyihalarni baholay oladi.</p>
+                <p>Hakamni o'chirish faqat tizim ma'murlari (admin) tomonidan amalga oshiriladi.</p>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

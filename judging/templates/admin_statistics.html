@@ -1,0 +1,242 @@
+{% extends 'base.html' %}
+
+{% block title %}Samaradorlik tahlili - JudgeHub{% endblock %}
+
+{% block extra_head %}
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-8 animate-fade-in">
+    <!-- Header -->
+    <div>
+        <div class="flex items-center space-x-2.5 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+            <a href="{% url 'admin_dashboard' %}" class="hover:text-white transition-colors">Admin</a>
+            <i class="fa-solid fa-chevron-right text-[10px]"></i>
+            <span class="text-emerald-400">Tizim statistikasi</span>
+        </div>
+        <h1 class="text-3xl font-extrabold text-white tracking-tight">Samaradorlik tahlili</h1>
+        <p class="text-slate-400 text-sm mt-1">Mezonlar bo'yicha o'rtacha ko'rsatkichlar, loyihalar natijalari va sinflar darajasidagi baholashlarni ko'rib chiqing.</p>
+    </div>
+
+    <!-- Category Scores Breakdown Widgets -->
+    <div class="grid grid-cols-1 min-[380px]:grid-cols-2 lg:grid-cols-5 gap-5">
+        <!-- Functionality -->
+        <div class="glass-panel p-4 rounded-xl border border-slate-800 text-center space-y-1">
+            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Funksionallik</span>
+            <div class="text-2xl font-black text-white">{{ avg_fun }}/10</div>
+            <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                <div class="bg-emerald-500 h-full rounded-full" style="width: {% widthratio avg_fun 1 10 %}%"></div>
+            </div>
+        </div>
+        <!-- Architecture -->
+        <div class="glass-panel p-4 rounded-xl border border-slate-800 text-center space-y-1">
+            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Arxitektura</span>
+            <div class="text-2xl font-black text-white">{{ avg_arc }}/10</div>
+            <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                <div class="bg-blue-500 h-full rounded-full" style="width: {% widthratio avg_arc 1 10 %}%"></div>
+            </div>
+        </div>
+        <!-- Performance -->
+        <div class="glass-panel p-4 rounded-xl border border-slate-800 text-center space-y-1">
+            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Samaradorlik</span>
+            <div class="text-2xl font-black text-white">{{ avg_per }}/10</div>
+            <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                <div class="bg-purple-500 h-full rounded-full" style="width: {% widthratio avg_per 1 10 %}%"></div>
+            </div>
+        </div>
+        <!-- Security -->
+        <div class="glass-panel p-4 rounded-xl border border-slate-800 text-center space-y-1">
+            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Xavfsizlik</span>
+            <div class="text-2xl font-black text-white">{{ avg_sec }}/10</div>
+            <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                <div class="bg-amber-500 h-full rounded-full" style="width: {% widthratio avg_sec 1 10 %}%"></div>
+            </div>
+        </div>
+        <!-- UI/UX -->
+        <div class="glass-panel p-4 rounded-xl border border-slate-800 text-center space-y-1 col-span-1 min-[380px]:col-span-2 lg:col-span-1">
+            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">UI / UX dizayn</span>
+            <div class="text-2xl font-black text-white">{{ avg_ux }}/10</div>
+            <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                <div class="bg-pink-500 h-full rounded-full" style="width: {% widthratio avg_ux 1 10 %}%"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Grid Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Left: Radar category averages comparison (1 Column) -->
+        <div class="glass-panel p-6 rounded-2xl border border-slate-800/80 shadow-xl space-y-4">
+            <h3 class="font-bold text-lg text-white">Mezonlar taqqoslovi</h3>
+            <p class="text-slate-400 text-xs">Loyihalarning har bir baholash toifasidagi natijalarining umumiy ko'rinishi.</p>
+            <div class="relative h-64 flex items-center justify-center">
+                <canvas id="categoryRadarChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Middle: Top Projects chart (1 Column) -->
+        <div class="glass-panel p-6 rounded-2xl border border-slate-800/80 shadow-xl space-y-4 lg:col-span-2">
+            <h3 class="font-bold text-lg text-white">Eng yaxshi 10 ta loyihaning o'rtacha ballari</h3>
+            <p class="text-slate-400 text-xs">Eng yuqori ball to'plagan jamoalarning umumiy o'rtacha ko'rsatkichlarini ko'rsatadi.</p>
+            <div class="relative h-64">
+                <canvas id="topProjectsChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Class Average comparison (Full bottom row) -->
+        <div class="glass-panel p-6 rounded-2xl border border-slate-800/80 shadow-xl space-y-4 lg:col-span-3">
+            <h3 class="font-bold text-lg text-white">Sinflar bo'yicha samaradorlik</h3>
+            <p class="text-slate-400 text-xs">Xakaton jarayonini tahlil qilish uchun sinflararo o'rtacha ballarni solishtiring.</p>
+            <div class="relative h-60">
+                <canvas id="classAveragesChart"></canvas>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% load l10n %}
+{% localize off %}
+<script>
+    // Set default Chart configuration
+    Chart.defaults.color = '#94a3b8';
+    Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.08)';
+    Chart.defaults.font.family = "'Inter', sans-serif";
+
+    // 1. Criteria Comparison Radar Chart
+    const ctxRadar = document.getElementById('categoryRadarChart').getContext('2d');
+    new Chart(ctxRadar, {
+        type: 'radar',
+        data: {
+            labels: ['Funksionallik', 'Arxitektura', 'Samaradorlik', 'Xavfsizlik', 'UI/UX'],
+            datasets: [{
+                label: "Umumiy o'rtacha ball",
+                data: [{{ avg_fun }}, {{ avg_arc }}, {{ avg_per }}, {{ avg_sec }}, {{ avg_ux }}],
+                backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                borderColor: '#10b981',
+                borderWidth: 2,
+                pointBackgroundColor: '#10b981',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: '#10b981'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                r: {
+                    angleLines: {
+                        color: 'rgba(255, 255, 255, 0.08)'
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.08)'
+                    },
+                    pointLabels: {
+                        font: {
+                            size: 10,
+                            weight: 'bold'
+                        },
+                        color: '#94a3b8'
+                    },
+                    suggestedMin: 0,
+                    suggestedMax: 10
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+
+    // 2. Top Projects Bar Chart
+    const ctxBar = document.getElementById('topProjectsChart').getContext('2d');
+    const projectLabels = {{ chart_labels|safe }};
+    const projectScores = {{ chart_scores|safe }};
+    
+    new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+            labels: projectLabels.length ? projectLabels : ["Ma'lumot yo'q"],
+            datasets: [{
+                label: "O'rtacha ball",
+                data: projectScores.length ? projectScores : [0],
+                backgroundColor: 'rgba(59, 130, 246, 0.35)',
+                borderColor: '#3b82f6',
+                borderWidth: 1.5,
+                borderRadius: 8,
+                hoverBackgroundColor: '#10b981',
+                hoverBorderColor: '#10b981',
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    grid: { display: false }
+                },
+                y: {
+                    beginAtZero: true,
+                    max: 10,
+                    ticks: {
+                        stepSize: 2
+                    }
+                }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+
+    // 3. Class Averages Bar Chart
+    const ctxClass = document.getElementById('classAveragesChart').getContext('2d');
+    const classLabels = {{ class_labels|safe }};
+    const classScores = {{ class_scores|safe }};
+
+    new Chart(ctxClass, {
+        type: 'bar',
+        data: {
+            labels: classLabels.length ? classLabels : ["Ma'lumot yo'q"],
+            datasets: [{
+                label: "Sinf o'rtachasi",
+                data: classScores.length ? classScores : [0],
+                backgroundColor: 'rgba(139, 92, 246, 0.35)',
+                borderColor: '#8b5cf6',
+                borderWidth: 1.5,
+                borderRadius: 8,
+                hoverBackgroundColor: '#10b981',
+                hoverBorderColor: '#10b981',
+            }]
+        },
+        options: {
+            indexAxis: 'y', // Horizontal bars
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    max: 10,
+                    ticks: {
+                        stepSize: 2
+                    }
+                },
+                y: {
+                    grid: { display: false }
+                }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+</script>
+{% endlocalize %}
+{% endblock %}
